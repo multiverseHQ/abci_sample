@@ -19,7 +19,7 @@ func main() {
 	fmt.Printf("\n")
 	fmt.Printf("<3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3\n")
 	fmt.Printf("\n")
-	addrPtr := flag.String("addr", "tcp://0.0.0.0:46658", "Listen address")
+	addrPtr := flag.String("addr", "tcp://0.0.0.0:46659", "Listen address")
 	abciPtr := flag.String("abci", "socket", "ABCI server: socket | grpc")
 	serialPtr := flag.Bool("serial", false, "Enforce incrementing (serial) txs")
 	flag.Parse()
