@@ -12,11 +12,13 @@ import (
 )
 
 func main() {
+	fmt.Printf("\n")
 	fmt.Printf("Welcome to Multiverse\n")
-	fmt.Printf("<3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3\n")
+	fmt.Printf("\n")
 	fmt.Printf("This is the ABCi Developper Application Example.\n")
+	fmt.Printf("\n")
 	fmt.Printf("<3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3\n")
-
+	fmt.Printf("\n")
 	addrPtr := flag.String("addr", "tcp://0.0.0.0:46658", "Listen address")
 	abciPtr := flag.String("abci", "socket", "ABCI server: socket | grpc")
 	serialPtr := flag.Bool("serial", false, "Enforce incrementing (serial) txs")
