@@ -40,6 +40,7 @@ func init() {
 	baselogger := tmlog.NewTMLogger(tmlog.NewSyncWriter(os.Stderr))
 	if opts.Verbose == true {
 		logger = tmlog.NewFilter(baselogger, tmlog.AllowAll())
+		logger.Info("debug output")
 	} else {
 		logger = tmlog.NewFilter(baselogger, tmlog.AllowInfo())
 	}
