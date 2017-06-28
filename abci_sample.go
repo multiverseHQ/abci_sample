@@ -2,16 +2,50 @@ package main
 
 import (
 	"flag"
-	"os"
 	"fmt"
+	"os"
 
 	"github.com/MultiverseHQ/abci_sample/counter"
 	"github.com/tendermint/abci/server"
 	cmn "github.com/tendermint/tmlibs/common"
-	"github.com/tendermint/tmlibs/log"
+	tmlog "github.com/tendermint/tmlibs/log"
 )
 
-func main() {
+var logger tmlog.Logger
+
+type options struct {
+	Address  string
+	ABCIType string
+	Serial   bool
+	Verbose  bool
+}
+
+var opts options
+
+func ParseOptions() options {
+	var opts options
+	flag.StringVar(&opts.Address, "addr", "tcp://0.0.0.0:46659", "Listen address")
+	flag.StringVar(&opts.ABCIType, "abci", "socket", "ABCI server: socket | grpc")
+	flag.BoolVar(&opts.Serial, "serial", false, "Enforce incrementing (serial) txs")
+	flag.BoolVar(&opts.Verbose, "verbose", false, "Set verbose output")
+	flag.BoolVar(&opts.Verbose, "v", false, "Set verbose output")
+
+	flag.Parse()
+	return opts
+}
+
+func init() {
+	opts = ParseOptions()
+
+	baselogger := tmlog.NewTMLogger(tmlog.NewSyncWriter(os.Stderr))
+	if opts.Verbose == true {
+		logger = tmlog.NewFilter(baselogger, tmlog.AllowAll())
+	} else {
+		logger = tmlog.NewFilter(baselogger, tmlog.AllowInfo())
+	}
+}
+
+func Execute() error {
 	fmt.Printf("\n")
 	fmt.Printf("Welcome to Multiverse\n")
 	fmt.Printf("\n")
@@ -19,24 +53,17 @@ func main() {
 	fmt.Printf("\n")
 	fmt.Printf("<3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3\n")
 	fmt.Printf("\n")
-	addrPtr := flag.String("addr", "tcp://0.0.0.0:46659", "Listen address")
-	abciPtr := flag.String("abci", "socket", "ABCI server: socket | grpc")
-	serialPtr := flag.Bool("serial", false, "Enforce incrementing (serial) txs")
-	flag.Parse()
-	app := counter.NewCounterApplication(*serialPtr)
 
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+	app := counter.NewCounterApplication(opts.Serial, logger)
 
 	// Start the listener
-	srv, err := server.NewServer(*addrPtr, *abciPtr, app)
+	srv, err := server.NewServer(opts.Address, opts.ABCIType, app)
 	if err != nil {
-		logger.Error(err.Error())
-		os.Exit(1)
+		return err
 	}
 	srv.SetLogger(logger.With("module", "abci-server"))
 	if _, err := srv.Start(); err != nil {
-		logger.Error(err.Error())
-		os.Exit(1)
+		return err
 	}
 
 	// Wait forever
@@ -45,4 +72,12 @@ func main() {
 		srv.Stop()
 	})
 
+	return nil
+}
+
+func main() {
+	if err := Execute(); err != nil {
+		logger.Error("unhandled error", "error", err)
+		os.Exit(1)
+	}
 }
