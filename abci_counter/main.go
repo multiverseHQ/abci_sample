@@ -1,38 +1,16 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
 
-	"github.com/MultiverseHQ/abci_sample/counter"
+	"github.com/MultiverseHQ/abci_sample"
 	"github.com/tendermint/abci/server"
 	cmn "github.com/tendermint/tmlibs/common"
 	tmlog "github.com/tendermint/tmlibs/log"
 )
 
 var logger tmlog.Logger
-
-type options struct {
-	Address  string
-	ABCIType string
-	Serial   bool
-	Verbose  bool
-}
-
-var opts options
-
-func ParseOptions() options {
-	var opts options
-	flag.StringVar(&opts.Address, "addr", "tcp://0.0.0.0:46659", "Listen address")
-	flag.StringVar(&opts.ABCIType, "abci", "socket", "ABCI server: socket | grpc")
-	flag.BoolVar(&opts.Serial, "serial", false, "Enforce incrementing (serial) txs")
-	flag.BoolVar(&opts.Verbose, "verbose", false, "Set verbose output")
-	flag.BoolVar(&opts.Verbose, "v", false, "Set verbose output")
-
-	flag.Parse()
-	return opts
-}
 
 func init() {
 	opts = ParseOptions()
@@ -55,7 +33,7 @@ func Execute() error {
 	fmt.Printf("<3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3\n")
 	fmt.Printf("\n")
 
-	app := counter.NewCounterApplication(opts.Serial, logger)
+	app := abcicounter.NewCounterApplication(opts.Serial, logger)
 
 	// Start the listener
 	srv, err := server.NewServer(opts.Address, opts.ABCIType, app)

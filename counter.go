@@ -1,4 +1,4 @@
-package counter
+package abcicounter
 
 import (
 	"encoding/binary"
