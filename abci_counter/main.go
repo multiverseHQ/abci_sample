@@ -22,6 +22,13 @@ func init() {
 	} else {
 		logger = tmlog.NewFilter(baselogger, tmlog.AllowInfo())
 	}
+
+	// parse the tmnode address from Env variable
+	fromEnv := os.Getenv("NODE_UID")
+	if len(fromEnv) > 0 {
+		opts.UID = fromEnv
+	}
+
 }
 
 func Execute() error {
@@ -33,7 +40,7 @@ func Execute() error {
 	fmt.Printf("<3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3 <3\n")
 	fmt.Printf("\n")
 
-	app := abcicounter.NewCounterApplication(opts.Serial, logger)
+	app := abcicounter.NewCounterApplication(opts.Serial, logger, opts.UID)
 
 	// Start the listener
 	srv, err := server.NewServer(opts.Address, opts.ABCIType, app)
