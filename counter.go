@@ -106,7 +106,6 @@ func (app *CounterApplication) CheckTx(data []byte) types.Result {
 		return res
 	}
 	if len(app.UID) == 0 {
-		app.logger.Info("bite")
 		return types.ErrBaseInvalidPubKey.SetLog(cmn.Fmt("I do not have my Key !"))
 	}
 
