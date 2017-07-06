@@ -6,8 +6,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"log"
+	"regexp"
+	"sort"
+	"strings"
 
+	"github.com/tendermint/go-crypto"
 	"github.com/tendermint/tendermint/rpc/client"
 )
 
@@ -25,11 +28,8 @@ type nodeInfo struct {
 	TxCount     uint64
 }
 
-type nodeManager struct {
-	Keys          []string
-	lastNodeIdx   int
-	nodeByAddress map[string]*node
-	nodeByKey     map[string]*node
+func pubKeyToString(pk crypto.PubKey) string {
+	return hex.EncodeToString(pk.Address())
 }
 
 func newNodeByAddress(address string) (*node, error) {
@@ -42,24 +42,17 @@ func newNodeByAddress(address string) (*node, error) {
 
 	res := &node{
 		Address: address,
-		Key:     hex.EncodeToString(status.PubKey.Address()),
+		Key:     pubKeyToString(status.PubKey),
 		cli:     cli,
 	}
 
 	return res, res.setMyKey()
 }
 
-var totalTx = -1
-
-func (n *node) makeTx(fail bool) error {
-	totalTx++
-	amount := totalTx
-	if fail == true {
-		amount = amount - 1
-	}
+func (n *node) makeTx(nonce uint64) error {
 
 	args := map[string]interface{}{
-		"Amount":             amount,
+		"Amount":             nonce,
 		"reward_destination": n.Key,
 	}
 
@@ -85,7 +78,6 @@ func (n *node) getTx() (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-	log.Printf("Got %d:%v", len(txRes.Value), txRes.Value)
 	return binary.BigEndian.Uint64(txRes.Value), nil
 }
 
@@ -98,18 +90,21 @@ func (n *node) getRewards() (map[string]uint64, error) {
 	return res, json.Unmarshal(rewardRes.Value, &res)
 }
 
-func (n *nodeManager) getNodeInfo() ([]*nodeInfo, error) {
-	defer func() { n.lastNodeIdx = (n.lastNodeIdx + 1) % len(n.Keys) }()
+type byKey []*nodeInfo
 
+func (l byKey) Len() int           { return len(l) }
+func (l byKey) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
+func (l byKey) Less(i, j int) bool { return l[i].Key < l[j].Key }
+
+func (n *node) getAllNodeInfo() ([]*nodeInfo, error) {
 	infos := make(map[string]*nodeInfo)
 
-	nn := n.nodeByKey[n.Keys[n.lastNodeIdx]]
-
-	txNumber, err := nn.getTx()
+	txNumber, err := n.getTx()
 	if err != nil {
 		return nil, err
 	}
-	rewards, err := nn.getRewards()
+
+	rewards, err := n.getRewards()
 	if err != nil {
 		return nil, err
 	}
@@ -124,12 +119,12 @@ func (n *nodeManager) getNodeInfo() ([]*nodeInfo, error) {
 		infos[k] = ni
 	}
 
-	validators, err := nn.cli.Validators()
+	validators, err := n.cli.Validators()
 	if err != nil {
 		return nil, err
 	}
 	for _, v := range validators.Validators {
-		k := string(v.PubKey.Address())
+		k := pubKeyToString(v.PubKey)
 		if ni, ok := infos[k]; ok == true {
 			ni.VotingPower = v.VotingPower
 		} else {
@@ -147,5 +142,36 @@ func (n *nodeManager) getNodeInfo() ([]*nodeInfo, error) {
 		res = append(res, i)
 	}
 
+	//we sort by key
+	sort.Sort(byKey(res))
+	return res, nil
+}
+
+var portRx = regexp.MustCompile(`:[0-9]+\z`)
+
+func (n *node) getPeers() ([]string, error) {
+	infos, err := n.cli.NetInfo()
+	if err != nil {
+		return nil, err
+	}
+	res := make([]string, 0, len(infos.Peers))
+	for _, p := range infos.Peers {
+		addr := portRx.ReplaceAllString(p.RemoteAddr, "")
+		done := false
+		for _, o := range p.Other {
+			if strings.HasPrefix(o, "rpc_addr=") == false {
+				continue
+			}
+			done = true
+			port := portRx.FindAllString(o, 1)
+			if len(port) == 0 {
+				return res, fmt.Errorf("Could not extract port from '%s'", o)
+			}
+			res = append(res, "http://"+addr+port[0])
+		}
+		if done == false {
+			return res, fmt.Errorf("Could not find rpc address")
+		}
+	}
 	return res, nil
 }
