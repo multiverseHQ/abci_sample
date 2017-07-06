@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"github.com/tendermint/abci/types"
 	cmn "github.com/tendermint/tmlibs/common"
@@ -128,7 +129,15 @@ func (app *CounterApplication) Commit() types.Result {
 	byteCount := make([]byte, 8)
 	binary.BigEndian.PutUint64(byteCount, uint64(app.txCount))
 	hash.Write(byteCount)
-	fmt.Fprintf(hash, "%v", app.rewards)
+	//write into the hash in the same order
+	var keys = make([]string, 0, len(app.rewards))
+	for k, _ := range app.rewards {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		fmt.Fprintf(hash, "%s:%d", k, app.rewards[k])
+	}
 	return types.NewResultOK(hash.Sum(nil), "")
 }
 
