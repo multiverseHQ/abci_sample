@@ -1,0 +1,8 @@
+{
+    "Nodes" : [
+        {
+            "Address" : "localhost:46657",
+            "UID" : "Node 0"
+        }
+    ]
+}
