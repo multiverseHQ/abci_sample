@@ -62,12 +62,9 @@ func (n *node) makeTx(nonce uint64) error {
 
 	raw, _ := json.Marshal(args)
 	encoded := base64.StdEncoding.EncodeToString(raw)
-	res, err := n.cli.BroadcastTxCommit([]byte(encoded))
-	if res.CheckTx.IsErr() {
-		return fmt.Errorf("Invalid transaction: %s", res.CheckTx.Error())
-	}
-	if res.DeliverTx.IsErr() {
-		return fmt.Errorf("Cannot deliver transaction: %s", res.DeliverTx.Error())
+	res, err := n.cli.BroadcastTxSync([]byte(encoded))
+	if res.Code != 0 {
+		return fmt.Errorf("Invalid transaction: %s", res.Log)
 	}
 	return err
 }
