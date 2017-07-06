@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"time"
 )
 
 func Execute() error {
@@ -12,7 +13,19 @@ func Execute() error {
 		return err
 	}
 
-	log.Printf("%s", nm)
+	for i := 0; i < 40; i++ {
+		if i%2 == 0 {
+			nm.commitTx(false)
+		}
+		infos, err := nm.fetchStatus()
+		if err != nil {
+			return err
+		}
+		for i, ni := range infos {
+			log.Printf("%03d: %s", i, ni)
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
 	return nil
 }
 

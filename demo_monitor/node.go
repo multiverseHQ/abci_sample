@@ -28,6 +28,10 @@ type nodeInfo struct {
 	TxCount     uint64
 }
 
+func (n *nodeInfo) String() string {
+	return fmt.Sprintf("Key:%s Reward:%04d VotingPower:%04d TxCount:%04d", n.Key, n.Reward, n.VotingPower, n.TxCount)
+}
+
 func pubKeyToString(pk crypto.PubKey) string {
 	return hex.EncodeToString(pk.Address())
 }
