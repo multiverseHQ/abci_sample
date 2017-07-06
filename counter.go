@@ -26,14 +26,14 @@ type CounterApplication struct {
 	UID     string
 }
 
-func NewCounterApplication(serial bool, logger tmlog.Logger, UID string) *CounterApplication {
+func NewCounterApplication(serial bool, logger tmlog.Logger) *CounterApplication {
 
 	return &CounterApplication{
 		serial:  serial,
 		logger:  logger,
 		txCount: 0,
 		rewards: make(map[string]uint64),
-		UID:     UID,
+		UID:     "",
 	}
 }
 
@@ -104,6 +104,11 @@ func (app *CounterApplication) CheckTx(data []byte) types.Result {
 	if err != nil {
 		return res
 	}
+	if len(app.UID) == 0 {
+		app.logger.Info("bite")
+		return types.ErrBaseInvalidPubKey.SetLog(cmn.Fmt("I do not have my Key !"))
+	}
+
 	if tx.RewardDest != app.UID {
 		return types.ErrBaseInvalidPubKey.SetLog(cmn.Fmt("Invalid pubkey (got:%s, want:%s). Reward me please!", tx.RewardDest, app.UID))
 	}
@@ -130,10 +135,21 @@ func (app *CounterApplication) Commit() types.Result {
 func (app *CounterApplication) Query(reqQuery types.RequestQuery) types.ResponseQuery {
 	app.logger.Debug("Query()", "query", reqQuery)
 	switch reqQuery.Path {
+	case "set_key":
+		app.UID = string(reqQuery.GetData())
+		return types.ResponseQuery{}
 	case "hash":
 		return types.ResponseQuery{Value: []byte(cmn.Fmt("%v", app.hashCount))}
 	case "tx":
-		return types.ResponseQuery{Value: []byte(cmn.Fmt("%v", app.txCount))}
+		byteCount := make([]byte, 8)
+		binary.BigEndian.PutUint64(byteCount, uint64(app.txCount))
+		return types.ResponseQuery{Value: byteCount}
+	case "rewards":
+		data, err := json.Marshal(app.rewards)
+		if err != nil {
+			return types.ResponseQuery{Log: cmn.Fmt("Cannot marshal rewards:", err.Error())}
+		}
+		return types.ResponseQuery{Value: data}
 	default:
 		return types.ResponseQuery{Log: cmn.Fmt("Invalid query path. Expected hash or tx, got %v", reqQuery.Path)}
 	}
