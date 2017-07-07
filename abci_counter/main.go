@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/MultiverseHQ/abci_sample"
+	"github.com/MultiverseHQ/demo_app"
 	"github.com/tendermint/abci/server"
 	cmn "github.com/tendermint/tmlibs/common"
 	tmlog "github.com/tendermint/tmlibs/log"
