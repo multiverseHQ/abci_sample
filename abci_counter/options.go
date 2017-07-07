@@ -13,7 +13,7 @@ var opts options
 
 func ParseOptions() options {
 	var opts options
-	flag.StringVar(&opts.Address, "addr", "tcp://0.0.0.0:46659", "Listen address")
+	flag.StringVar(&opts.Address, "addr", "tcp://0.0.0.0:46658", "Listen address")
 	flag.StringVar(&opts.ABCIType, "abci", "socket", "ABCI server: socket | grpc")
 	flag.BoolVar(&opts.Serial, "serial", false, "Enforce incrementing (serial) txs")
 	flag.BoolVar(&opts.Verbose, "verbose", false, "Set verbose output")
