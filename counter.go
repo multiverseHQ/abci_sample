@@ -38,7 +38,7 @@ func NewCounterApplication(serial bool, logger tmlog.Logger) *CounterApplication
 	}
 }
 
-func (app *CounterApplication) Info() types.ResponseInfo {
+func (app *CounterApplication) Info(req types.RequestInfo) types.ResponseInfo {
 	app.logger.Debug("Info()")
 	return types.ResponseInfo{Data: cmn.Fmt("{\"hashes\":%v,\"txs\":%v}", app.hashCount, app.txCount)}
 }
